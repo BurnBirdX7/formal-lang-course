@@ -1,11 +1,11 @@
-name: Python package
+name: Run tests
 
 on:
   - push
   - pull_request
 
 jobs:
-  build:
+  test:
 
     runs-on: ubuntu-latest
     strategy:
