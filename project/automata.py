@@ -1,6 +1,6 @@
 import networkx as nt
 import project.utils
-from typing import Iterable
+from typing import Iterable, Union, Optional
 from pyformlang.finite_automaton import (
     DeterministicFiniteAutomaton,
     NondeterministicFiniteAutomaton,
@@ -17,9 +17,9 @@ def get_dfa_from_regex(regex: str) -> DeterministicFiniteAutomaton:
 
 
 def get_nfa_from_graph(
-    graph: nt.MultiDiGraph | str,
-    start_states: Iterable[State] | None = None,
-    final_states: Iterable[State] | None = None,
+    graph: Union[nt.MultiDiGraph, str],
+    start_states: Optional[Iterable[State]] = None,
+    final_states: Optional[Iterable[State]] = None,
 ) -> NondeterministicFiniteAutomaton:
     """
     Builds NFA from networkx grapg
