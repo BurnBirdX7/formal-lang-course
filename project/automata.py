@@ -4,6 +4,7 @@ from typing import Iterable
 from pyformlang.finite_automaton import (
     DeterministicFiniteAutomaton,
     NondeterministicFiniteAutomaton,
+    State,
 )
 from pyformlang.regular_expression import Regex
 
@@ -17,8 +18,8 @@ def get_dfa_from_regex(regex: str) -> DeterministicFiniteAutomaton:
 
 def get_nfa_from_graph(
     graph: nt.MultiDiGraph | str,
-    start_states: Iterable | None = None,
-    final_states: Iterable | None = None,
+    start_states: Iterable[State] | None = None,
+    final_states: Iterable[State] | None = None,
 ) -> NondeterministicFiniteAutomaton:
     """
     Builds NFA from networkx grapg
@@ -36,7 +37,7 @@ def get_nfa_from_graph(
     if final_states is None:
         final_states = set(graph.nodes)
 
-    nfa = DeterministicFiniteAutomaton.from_networkx(graph)
+    nfa = NondeterministicFiniteAutomaton.from_networkx(graph)
 
     for ss in start_states:
         nfa.add_start_state(ss)
