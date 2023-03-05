@@ -1,5 +1,5 @@
 import networkx as nt
-from utils import get_graph_by_name
+import project.utils
 from typing import Iterable
 from pyformlang.finite_automaton import (
     DeterministicFiniteAutomaton,
@@ -30,7 +30,7 @@ def get_nfa_from_graph(
     """
 
     if type(graph) == str:
-        graph: nt.MultiDiGraph = get_graph_by_name(graph)
+        graph: nt.MultiDiGraph = project.utils.get_graph_by_name(graph)
 
     if start_states is None:
         start_states = set(graph.nodes)
