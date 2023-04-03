@@ -1,6 +1,6 @@
 from typing import AbstractSet
 
-from pyformlang import cfg
+from pyformlang import cfg  # type: ignore
 
 
 def load_cfg(name: str) -> cfg.CFG:
@@ -9,7 +9,7 @@ def load_cfg(name: str) -> cfg.CFG:
     :param name: name of file
     :return: CFG instance
     """
-    with open(name, 'r') as file:
+    with open(name, "r") as file:
         return cfg.CFG.from_text(file.read())
 
 
@@ -19,7 +19,7 @@ def save_cfg(name: str, g: cfg.CFG) -> None:
     :param name: file name
     :param g: CFG instance
     """
-    with open(name, 'w') as file:
+    with open(name, "w") as file:
         file.write(g.to_text())
 
 
@@ -42,7 +42,4 @@ def cfg_to_wcnf(g: cfg.CFG) -> cfg.CFG:
         new_cfg._get_productions_with_only_single_terminals()
     )
 
-    return cfg.CFG(
-        start_symbol=new_cfg.start_symbol,
-        productions=prods
-    )
+    return cfg.CFG(start_symbol=new_cfg.start_symbol, productions=prods)
