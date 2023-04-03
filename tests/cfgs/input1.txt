@@ -1,0 +1,2 @@
+S -> S S | S a S | $ | A
+A -> S a
