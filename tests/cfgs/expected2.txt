@@ -1,0 +1,5 @@
+S -> epsilon | A C#CNF#1
+A -> A C#CNF#1 | "VAR:b#CNF#" A | epsilon
+B -> "VAR:b#CNF#" "VAR:b#CNF#"
+C#CNF#1 -> S B
+b#CNF# -> b
