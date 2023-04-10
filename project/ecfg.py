@@ -2,6 +2,7 @@ import re
 from collections import defaultdict
 from typing import Set, Optional, Dict, List, AbstractSet
 from pyformlang.cfg import CFG, Variable
+from pyformlang.finite_automaton import EpsilonNFA, DeterministicFiniteAutomaton
 from pyformlang.regular_expression import Regex
 
 from project.rfa import RFA, RFABox
@@ -18,6 +19,17 @@ class ECFGProduction:
     def __str__(self):
         return f"{self.head!s} -> {self.body!s}"
 
+    def __eq__(self, other: "ECFGProduction"):
+        if not isinstance(self, ECFGProduction):
+            return False
+
+        nfaThis: EpsilonNFA = self.body.to_epsilon_nfa()
+        nfaThat: EpsilonNFA = other.body.to_epsilon_nfa()
+        return self.head == other.head and nfaThis.is_equivalent_to(nfaThat)
+
+    def __hash__(self):
+        return hash((self.head, self.body))
+
 
 class ECFG:
     def __init__(
@@ -26,19 +38,33 @@ class ECFG:
         variables: Optional[AbstractSet[Variable]] = None,
         productions: Optional[Set[ECFGProduction]] = None,
     ):
-        self._start_symbol = start_symbol
-        self._vars = variables or set()
-        self._productions = productions or set()
+        self.start_symbol = start_symbol
+        self.vars = variables or set()
+        self.productions = productions or set()
 
     def __repr__(self):
         return (
-            f"ECFG(start_symbol={self._start_symbol!r},"
-            f"variables={self._vars!r},"
-            f"productions={self._productions!r})"
+            f"ECFG(start_symbol={self.start_symbol!r},"
+            f"variables={self.vars!r},"
+            f"productions={self.productions!r})"
         )
 
     def __str__(self):
-        return "\n".join([str(prod) for prod in self._productions])
+        return "\n".join([str(prod) for prod in self.productions])
+
+    def __eq__(self, other: "ECFG") -> bool:
+        if not isinstance(self, ECFG):
+            return False
+
+        for prod in self.productions:
+            has_eq = False
+            for other_prod in other.productions:
+                if prod == other_prod:
+                    has_eq = True
+            if not has_eq:
+                return False
+
+        return self.start_symbol == other.start_symbol and self.vars == other.vars
 
     @staticmethod
     def from_text(text: str, start_symbol=Variable("S")) -> "ECFG":
@@ -70,11 +96,11 @@ class ECFG:
                 productions[head] = body
                 variables.add(head)
 
-            return ECFG(
-                start_symbol=start_symbol,
-                variables=variables,
-                productions={ECFGProduction(k, v) for k, v in productions},
-            )
+        return ECFG(
+            start_symbol=start_symbol,
+            variables=variables,
+            productions={ECFGProduction(k, v) for k, v in productions.items()},
+        )
 
     @staticmethod
     def from_file(name: str, start_symbol: Variable = Variable("S")):
@@ -112,11 +138,11 @@ class ECFG:
         :return:
         """
         return RFA(
-            start_symbol=self._start_symbol,
+            start_symbol=self.start_symbol,
             boxes={
                 RFABox(
                     prod.head, prod.body.to_epsilon_nfa().to_deterministic().minimize()
                 )
-                for prod in self._productions
+                for prod in self.productions
             },
         )
