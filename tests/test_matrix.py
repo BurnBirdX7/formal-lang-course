@@ -1,11 +1,11 @@
-from project import matrix
+from project.cfpq import *
 from cfpq_data import labeled_two_cycles_graph
 from pyformlang.cfg import CFG, Variable
 
 
 def test_matrix():
     g = labeled_two_cycles_graph(2, 1, labels=("a", "b"))
-    result = matrix.cfg_from_text_matrix(
+    result = cfg_from_text_matrix(
         g,
         """
         S -> A B
@@ -50,9 +50,7 @@ def test_matrix_sf():
         """
     )
 
-    result = matrix.query_graph_matrix(
-        g, cfg, [0, 1, 2, 3], [0, 1, 2, 3], Variable("S")
-    )
+    result = query_graph_matrix(g, cfg, [0, 1, 2, 3], [0, 1, 2, 3], Variable("S"))
     assert result == {
         0: {0, 3},
         1: {0, 3},

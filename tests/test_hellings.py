@@ -1,6 +1,6 @@
 import pytest
 
-from project.hellings import *
+from project.cfpq import *
 from cfpq_data import labeled_cycle_graph, labeled_two_cycles_graph
 
 prod1 = "S -> epsilon"
