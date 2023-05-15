@@ -1,14 +1,13 @@
 grammar Language;
 
-program: stmt* EOF;
+program: (stmt ';')* EOF;
 
 stmt:
       bind
-    | print
-    | comment;
+    | print;
 
-bind: 'let' pattern '=' expr ';';
-print: 'print' expr ';';
+bind: 'let' pattern '=' expr;
+print: 'print' expr;
 comment: COMMENT;
 
 pattern: var | '[' pattern (',' pattern)* ']';
@@ -27,8 +26,8 @@ lambda:
 expr:
       var                                 // переменные
     | val                                 // константы
-    | 'set' 'start' 'of' expr 'as' expr  // задать множество стартовых состояний
-    | 'set' 'final' 'of' expr 'as' expr  // задать множество финальных состояний
+    | 'set' 'starts' 'of' expr 'as' expr  // задать множество стартовых состояний
+    | 'set' 'finals' 'of' expr 'as' expr  // задать множество финальных состояний
     | 'add' expr 'as' 'starts' 'of' expr // добавить состояния в множество стартовых
     | 'add' expr 'as' 'finals' 'of' expr // добавить состояния в множество финальных
     | 'get_starts' 'of' expr           // получить множество стартовых состояний
