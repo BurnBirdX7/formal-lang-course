@@ -1,11 +1,8 @@
-import sys
 from typing import List
-
 from antlr4 import *
 from project.language.antlr_out.LanguageParser import LanguageParser
 from project.language.antlr_out.LanguageLexer import LanguageLexer
 from project.language.antlr_out.LanguageListener import LanguageListener
-
 import pydot
 
 
@@ -39,13 +36,18 @@ class DOTBuilder(LanguageListener):
             edge = pydot.Edge(parent.get_name(), node.get_name())
             self._dot.add_edge(edge)
 
-    def _new_node(self, new_node: str, type: str = "terminal") -> pydot.Node:
+    def _new_node(self, name: str, type: str = "terminal") -> pydot.Node:
+        if name == ",":
+            name = f'"{name}"'
+        elif name == "\\":
+            name += name
+
         if type == "error":
-            new_node = pydot.Node(self._id(), label=new_node, color="red")
+            new_node = pydot.Node(self._id(), label=name, color="red")
         elif type == "terminal":
-            new_node = pydot.Node(self._id(), label=new_node)
+            new_node = pydot.Node(self._id(), label=name)
         elif type == "rule":
-            new_node = pydot.Node(self._id(), label=new_node, color="darkgray")
+            new_node = pydot.Node(self._id(), label=name, color="darkgray")
 
         self._dot.add_node(new_node)
         self._link_to_parent(new_node)

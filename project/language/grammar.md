@@ -57,7 +57,7 @@ lambda =
 let g' = load "wine";
 
 // Установим все вершины графа финальными и вершины с 0 по 100 - стартовыми
-let g = set start of (set final of g' as (get_vertices of g')) as {0..100};
+let g = set starts of (set finals of g' as (get_vertices of g')) as {0..100};
 
 // Язык из строк "l1" и "l2"
 let l1 = "l1" | "l2";
@@ -90,4 +90,5 @@ let vertices = vertices1 & vertices2;
 print vertices;
 ```
 
-[Дерево для примера](exampleTree.png)
+[Дерево для примера](exampleTree.png) \
+[Дерево построенное с помощью DOTBuilder](myExampleTree.png)
