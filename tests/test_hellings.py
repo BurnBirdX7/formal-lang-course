@@ -1,6 +1,6 @@
 import pytest
 
-from project.hellings import *
+from project.cfpq import *
 from cfpq_data import labeled_cycle_graph, labeled_two_cycles_graph
 
 prod1 = "S -> epsilon"
@@ -61,6 +61,6 @@ def test_query_to_cfg():
     graph = labeled_two_cycles_graph(2, 2, labels=("a", "b"))
     expected = {0: {4}, 2: {2, 4}}
     assert (
-        query_graph(graph, CFG.from_text(cfg), [0, 2], [2, 4], Variable("S"))
+        query_graph_hellings(graph, CFG.from_text(cfg), [0, 2], [2, 4], Variable("S"))
         == expected
     )

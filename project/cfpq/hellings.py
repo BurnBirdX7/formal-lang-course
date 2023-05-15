@@ -75,7 +75,7 @@ def hellings(graph: nt.MultiDiGraph, cfg: CFG) -> Set[Tuple[int, int, int]]:
     return rules
 
 
-def query_graph(
+def query_graph_hellings(
     graph: nt.MultiDiGraph,
     cfg: CFG,
     start_vertices: Iterable[int],
