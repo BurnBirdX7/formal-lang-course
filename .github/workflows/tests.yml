@@ -27,7 +27,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     - name: Generate ANTLR
-      working-directory: language
+      working-directory: project/language/
       run: antlr4 Language.g4 -Dlanguage=Python3 -o antlr_out
 
     - name: Run tests
