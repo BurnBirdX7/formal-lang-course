@@ -49,6 +49,6 @@ expr:
 
 VAR: [a-zA-Z_][a-zA-Z0-9_']*;
 STRING: '"' ~["]* '"'; // to allow string to contain escaped characters
-INT: [0-9]+;
+INT: '-'?[0-9]+;
 COMMENT: '//' (~('\n'|'\r'))* -> skip; // Consume everything that is not an end of line
 WS: [ \t\r\n\u000C] -> skip;
