@@ -1,5 +1,5 @@
+import itertools
 import pytest
-
 from project.language.language import *
 
 
@@ -53,3 +53,10 @@ invalid = [
 )
 def test_belongs_to_lang(prog: str, belongs: bool):
     assert belongs == does_belong_to_language(prog)
+
+
+@pytest.mark.parametrize("combination", itertools.combinations(valid, 2))
+def test_valid_combinations(combination):
+    assert does_belong_to_language("".join(combination))
+    assert does_belong_to_language(" ".join(combination))
+    assert does_belong_to_language("\n".join(combination))
