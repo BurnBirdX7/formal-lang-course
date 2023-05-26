@@ -8,6 +8,7 @@ stmt:
 
 bind: 'let' pattern '=' expr;
 print: 'print' expr;
+
 comment: COMMENT;
 
 pattern: var | '[' pattern (',' pattern)* ']';
@@ -28,6 +29,7 @@ expr:
     | val                                 // константы
     | 'set' 'starts' 'of' expr 'as' expr  // задать множество стартовых состояний
     | 'set' 'finals' 'of' expr 'as' expr  // задать множество финальных состояний
+
     | 'add' expr 'as' 'starts' 'of' expr // добавить состояния в множество стартовых
     | 'add' expr 'as' 'finals' 'of' expr // добавить состояния в множество финальных
     | 'get_starts' 'of' expr           // получить множество стартовых состояний
