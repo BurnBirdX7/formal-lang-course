@@ -1,7 +1,9 @@
 import itertools
+from textwrap import dedent
+
+import pydot
 import pytest
 from project.language.language import *
-
 
 valid = [
     # let:
@@ -60,3 +62,19 @@ def test_valid_combinations(combination):
     assert does_belong_to_language("".join(combination))
     assert does_belong_to_language(" ".join(combination))
     assert does_belong_to_language("\n".join(combination))
+
+
+def test_dot():
+    with open("tests/expected.dot", "r") as f:
+        expected = f.read()
+
+    dot = DOTBuilder.build("let a = 1;")
+    canon_dot: str = (
+        dot.create_canon().decode()
+    )  # get canon text representation of the graph
+
+    # pydot on Windows creates dot files with inconsistent formatting
+    expected = expected.replace("\r", "").replace("\t", "    ")
+    actual = canon_dot.replace("\r", "").replace("\t", "    ")
+
+    assert dedent(expected).strip() == dedent(actual).strip()
