@@ -1,0 +1,35 @@
+digraph Program {
+	node [label="\N"];
+	1	[color=darkgray,
+		label="rule: program"];
+	2	[color=darkgray,
+		label="rule: stmt"];
+	1 -> 2;
+	12	[label=";"];
+	1 -> 12;
+	13	[label=<EOF>];
+	1 -> 13;
+	3	[color=darkgray,
+		label="rule: bind"];
+	2 -> 3;
+	4	[label=let];
+	3 -> 4;
+	5	[color=darkgray,
+		label="rule: pattern"];
+	3 -> 5;
+	8	[label="="];
+	3 -> 8;
+	9	[color=darkgray,
+		label="rule: expr"];
+	3 -> 9;
+	6	[color=darkgray,
+		label="rule: var"];
+	5 -> 6;
+	7	[label=a];
+	6 -> 7;
+	10	[color=darkgray,
+		label="rule: val"];
+	9 -> 10;
+	11	[label=1];
+	10 -> 11;
+}
