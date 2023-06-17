@@ -3,7 +3,7 @@ from textwrap import dedent
 
 import pydot
 import pytest
-from project.language.language import *
+from project.language.DOTBuilder import *
 
 valid = [
     # let:

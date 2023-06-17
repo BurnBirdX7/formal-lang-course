@@ -1,6 +1,6 @@
 import sys
 from antlr4 import *
-from project.language.language import DOTBuilder
+from project.language.DOTBuilder import DOTBuilder
 import pydot
 
 
