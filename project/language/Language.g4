@@ -16,13 +16,15 @@ pattern:
     | '[' pattern (',' pattern)* ']' # patternPattern
     ;
 
-val: STRING | INT | intSet;
+val: STRING | INT | intSet | tuple;
 
 intSet:
       '{' '}'                  # setEmpty   // empty set
     | ('{' INT (',' INT)* '}') # setList    // set of listed elements
     | '{' INT '..' INT '}'     # setRange   // set of integers in a certain range
     ;
+
+tuple: '[' val (',' val)* ']';
 
 lambda:
     ('\\' | 'λ') pattern '->' expr;
@@ -42,13 +44,13 @@ expr:
     | 'get_edges' 'of' expr              # exprGetEdges     // получить все рёбра
     | 'get_labels' 'of' expr             # exprGetLabels    // получить все метки
     | 'map' expr 'with' lambda           # exprMap          // классический map
-    | 'filter' expr 'with' lambda        # exprFiler        // классический filter
+    | 'filter' expr 'with' lambda        # exprFilter       // классический filter
     | 'load' (VAR | STRING)              # exprLoad         // загрузка графа
-    | expr '&' expr                      # exprCross        // пересечение языков
+    | expr '&' expr                      # exprProduct      // пересечение языков
     | expr '++' expr                     # exprConcat       // конкатенация языков
     | expr '|' expr                      # exprUnion        // объединение языков
     | expr '*'                           # exprKleene       // замыкание языков (звезда Клини)
-    | 'tans' expr                        # exprTransition   // единичный переход
+    | 'trans' expr                       # exprTransition   // единичный переход
     | expr 'in' expr                     # exprIn
     | '(' expr ')'                       # exprBraced
     ;

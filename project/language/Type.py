@@ -1,4 +1,6 @@
-from typing import List
+from typing import List, Union
+
+from antlr4 import ParserRuleContext
 
 
 class ParseTypeError(StopIteration):
@@ -19,6 +21,14 @@ class NoneType(Type):
 
 
 class VarType(Type):
+    def __init__(self, name: str):
+        self.name = name
+
+    def __str__(self):
+        return self.name
+
+
+class BoolType(Type):
     pass
 
 
@@ -26,15 +36,15 @@ class IntType(Type):
     pass
 
 
-class TypedSetType(Type):
+class SetType(Type):
     def __init__(self, element_type: Type):
-        self.elementType = element_type
+        self.element_type = element_type
 
     def __str__(self):
-        return "SetType<" + str(self.elementType) + ">"
+        return "SetType<" + str(self.element_type) + ">"
 
     def __eq__(self, other):
-        return super().__eq__(other) and self.elementType == other.elementType
+        return super().__eq__(other) and self.element_type == other.element_type
 
 
 class StringType(Type):
@@ -42,11 +52,11 @@ class StringType(Type):
 
 
 class FAType(Type):
-    pass
+    def __init__(self, vertex_type: Type = IntType):
+        self.vertexType = vertex_type
 
-
-class RSMType(Type):
-    pass
+    def __str__(self):
+        return f"FAType<{self.vertexType!s}>"
 
 
 class TupleType(Type):
@@ -55,7 +65,7 @@ class TupleType(Type):
 
     def __str__(self):
         typeNames = map(str, self.description)
-        return "(" + ", ".join(typeNames) + ")"
+        return "t[" + ", ".join(typeNames) + "]"
 
     def __eq__(self, other):
         return super().__eq__(other) and self.description == other.description
@@ -63,23 +73,45 @@ class TupleType(Type):
     def __len__(self):
         return len(self.description)
 
+    def is_uniform(self) -> bool:
+        firstType = self.description[0]
+        for typ in self.description[1:]:
+            if firstType != typ:
+                return False
 
-class PatternType(TupleType):
-    def __init__(self, typeDescription: List[Type], nameDescription: List[str]):
-        super().__init__(typeDescription)
-        assert len(typeDescription) == len(nameDescription)
-        self.names = nameDescription
+        return True
+
+    @property
+    def element_type(self) -> Type:
+        if self.is_uniform():
+            return self.description[0]
+        raise ParseTypeError("Tried to get element type for not uniform tuple")
+
+
+class PatternType(Type):
+    def __init__(self, typeDescription: List[Union[VarType, "PatternType"]]):
+        self.description = typeDescription
 
     def __str__(self):
-        typeNames = map(str, self.description)
-        nvs = []
-        for typeN, varN in zip(typeNames, self.names):
-            if varN == "//pattern//":
-                nvs.append(str(typeN))
-            else:
-                nvs.append(str(varN))
-
-        return "[" + ", ".join(nvs) + "]"
+        patternNames = map(str, self.description)
+        return "p[" + ", ".join(patternNames) + "]"
 
     def __len__(self):
         return len(self.description)
+
+
+class LambdaType(Type):
+    def __init__(
+        self,
+        pattern: PatternType,
+        patternType: TupleType,
+        return_type: Type,
+        subtree: ParserRuleContext,
+    ):
+        self.pattern = pattern
+        self.patternType = patternType
+        self.returnType = return_type
+        self.subtree = subtree
+
+    def __str__(self):
+        return f"LambdaType<{self.patternType} -> {self.returnType}>"

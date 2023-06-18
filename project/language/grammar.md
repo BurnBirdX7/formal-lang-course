@@ -80,11 +80,11 @@ let s = get_starts of g;
 
 // Фильтры и мапы, берём все рёбра языка, выбираем вершины из которых ребро выходит,
 // отфильтровываем те вершины которые не входят в число начальных вершин `g`
-let vertices1 = filter (map (get_edges of res1) with \[[u_g,u_q1],l,[v_g,v_q1]] -> u_g) with \v -> v in s;
-let vertices2 = filter (map (get_edges of res2) with \[[u_g,u_q2],l,[v_g,v_q2]] -> u_g) with \v -> v in s;
+let vertices1 = filter (map (get_edges of res1) with \[[u_g,u_q1],l,[v_g,v_q1]] -> u_g) with \v -> (v in s);
+let vertices2 = filter (map (get_edges of res2) with \[[u_g,u_q2],l,[v_g,v_q2]] -> u_g) with \v -> (v in s);
 
 // Объединим полученные наборы вершин
-let vertices = vertices1 & vertices2;
+let vertices = vertices1 | vertices2;
 
 // Напечатаем
 print vertices;
