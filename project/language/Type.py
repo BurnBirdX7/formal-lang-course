@@ -58,6 +58,9 @@ class FAType(Type):
     def __str__(self):
         return f"FAType<{self.vertexType!s}>"
 
+    def __eq__(self, other):
+        return super().__eq__(other) and self.vertexType == other.vertexType
+
 
 class TupleType(Type):
     def __init__(self, description: List[Type]):
@@ -99,19 +102,24 @@ class PatternType(Type):
     def __len__(self):
         return len(self.description)
 
+    def __eq__(self, other):
+        return super().__eq__(other) and self.description == other.description
+
 
 class LambdaType(Type):
     def __init__(
         self,
         pattern: PatternType,
-        patternType: TupleType,
+        pattern_type: TupleType,
         return_type: Type,
-        subtree: ParserRuleContext,
+        body: ParserRuleContext,
+        associated_expr: ParserRuleContext,
     ):
         self.pattern = pattern
-        self.patternType = patternType
+        self.patternType = pattern_type
         self.returnType = return_type
-        self.subtree = subtree
+        self.body = body
+        self.associatedExpression = associated_expr
 
     def __str__(self):
         return f"LambdaType<{self.patternType} -> {self.returnType}>"

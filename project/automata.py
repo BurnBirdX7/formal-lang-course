@@ -5,6 +5,7 @@ from pyformlang.finite_automaton import (
     DeterministicFiniteAutomaton,
     NondeterministicFiniteAutomaton,
     State,
+    EpsilonNFA,
 )
 from pyformlang.regular_expression import Regex
 
@@ -20,7 +21,7 @@ def get_nfa_from_graph(
     graph: Union[nt.MultiDiGraph, str],
     start_states: Optional[Iterable[State]] = None,
     final_states: Optional[Iterable[State]] = None,
-) -> NondeterministicFiniteAutomaton:
+) -> EpsilonNFA:
     """
     Builds NFA from networkx grapg
     :param graph: networkx graph or name of the graph in CFPQ dataset
@@ -37,7 +38,7 @@ def get_nfa_from_graph(
     if final_states is None:
         final_states = set(graph.nodes)
 
-    nfa = NondeterministicFiniteAutomaton.from_networkx(graph)
+    nfa = EpsilonNFA.from_networkx(graph)
 
     for ss in start_states:
         nfa.add_start_state(ss)

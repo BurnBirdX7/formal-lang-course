@@ -45,7 +45,7 @@ expr:
     | 'get_labels' 'of' expr             # exprGetLabels    // получить все метки
     | 'map' expr 'with' lambda           # exprMap          // классический map
     | 'filter' expr 'with' lambda        # exprFilter       // классический filter
-    | 'load' (VAR | STRING)              # exprLoad         // загрузка графа
+    | 'load' (VAR | val)                 # exprLoad         // загрузка графа
     | expr '&' expr                      # exprProduct      // пересечение языков
     | expr '++' expr                     # exprConcat       // конкатенация языков
     | expr '|' expr                      # exprUnion        // объединение языков
