@@ -1,23 +1,10 @@
 from typing import List
 from antlr4 import *
-from project.language.antlr_out.LanguageParser import LanguageParser
-from project.language.antlr_out.LanguageLexer import LanguageLexer
-from project.language.antlr_out.LanguageListener import LanguageListener
 import pydot
 
-
-def get_parser(prog: str) -> LanguageParser:
-    input_stream = InputStream(prog)
-    lexer = LanguageLexer(input_stream)
-    stream = CommonTokenStream(lexer)
-    return LanguageParser(stream)
-
-
-def does_belong_to_language(prog: str):
-    parser = get_parser(prog)
-    parser.removeErrorListeners()
-    parser.program()
-    return parser.getNumberOfSyntaxErrors() == 0
+from project.language.antlr_out.LanguageListener import LanguageListener
+from project.language.antlr_out.LanguageParser import LanguageParser
+from project.language.interpret import get_parser
 
 
 class DOTBuilder(LanguageListener):

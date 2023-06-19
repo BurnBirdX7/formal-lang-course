@@ -2,40 +2,9 @@ import sys
 from typing import Dict, Optional
 
 from antlr4 import *
-from project.language.DOTBuilder import get_parser
 from project.language.antlr_out.LanguageListener import LanguageListener
 from project.language.antlr_out.LanguageParser import LanguageParser
 from project.language.Type import *
-
-
-def parse_program(prog: str):
-    walker = ParseTreeWalker()
-    typer = Typer()
-    parser = get_parser(prog)
-
-    if parser.getNumberOfSyntaxErrors() > 0:
-        print("Syntax errors were found", file=sys.stderr)
-        return
-    try:
-        walker.walk(typer, parser.program())
-
-        print("Variables:")
-        for var, typ in typer.variableTypes.items():
-            print(f"{var} :: {typ}")
-
-        print("Expression types:")
-        for ctx, typ in typer.typeAnnotations.items():
-            text = " ".join(
-                [
-                    child.getText() if len(child.getText()) < 10 else "..."
-                    for child in ctx.getChildren()
-                ]
-            )
-            print(f"{text} :: {typ}")
-
-    except ParseTypeError as err:
-        print("Error occurred", file=sys.stderr)
-        print(err.value, file=sys.stderr)
 
 
 class Typer(LanguageListener):

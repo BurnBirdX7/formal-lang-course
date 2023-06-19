@@ -1,25 +1,11 @@
-import sys
-from typing import Dict
-
 import networkx as nx
 from antlr4 import *
 
-from project.automata import (
-    get_nfa_from_graph,
-    nfa_production,
-    nfa_reachable,
-    nfa_union,
-    nfa_from_string,
-    nfa_concat,
-    nfa_closure,
-)
+from project.automata import *
 
 from project.language.antlr_out.LanguageVisitor import LanguageVisitor
 from project.language.antlr_out.LanguageParser import LanguageParser
 from project.language.Type import *
-
-from project.language.Typer import Typer
-from project.language.DOTBuilder import get_parser
 
 
 class ExecutionError(RuntimeError):
@@ -28,32 +14,18 @@ class ExecutionError(RuntimeError):
         self.value = msg
 
 
-def execute_code(prog):
-    tree = get_parser(prog)
-    walker = ParseTreeWalker()
-    typer = Typer()
-    program_tree = tree.program()
-
-    try:
-        walker.walk(typer, program_tree)
-    except ParseTypeError as e:
-        print("Type error occurred", file=sys.stderr)
-        print(e.value, file=sys.stderr)
-
-    executor = Executor(typer.variableTypes, typer.typeAnnotations)
-    executor.visit(program_tree)
-
-
 class Executor(LanguageVisitor):
     def __init__(
         self,
         variable_types: Dict[str, Type],
         type_annotations: Dict[ParserRuleContext, Type],
+        file_out,
     ):
         self.variableTypes: Dict[str, Type] = variable_types
         self.variableValues: Dict[str, Any] = {}
         self.typeAnnotations: Dict[ParserRuleContext, Type] = type_annotations
         self.valueAnnotations: Dict[ParserRuleContext, Any] = {}
+        self.fileOut = file_out
 
     def visitChildren(self, node):
         result = self.defaultResult()
@@ -144,9 +116,9 @@ class Executor(LanguageVisitor):
         typ = self.typeAnnotations.get(ctx.expr())
 
         if val is None:
-            print(f"<None> :: {typ}")
+            print(f"<None> :: {typ}", file=self.fileOut)
         else:
-            print(f"{val!s} :: {typ!s}")
+            print(f"{val!s} :: {typ!s}", file=self.fileOut)
 
     def visitVal(self, ctx: LanguageParser.ValContext):
         self.visitChildren(ctx)
