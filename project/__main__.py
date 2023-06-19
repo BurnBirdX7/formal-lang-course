@@ -7,7 +7,7 @@ def main(argv):
     if len(argv) != 2:
         print("Supply filename as an argument")
 
-    with open(argv[1]) as f:
+    with open(argv[1], "r", encoding="utf-8") as f:
         prog = f.read()
 
     execute_code(prog, sys.stdout, sys.stderr)

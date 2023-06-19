@@ -2,18 +2,11 @@ import sys
 
 import networkx as nt
 from numpy import kron
-from scipy.sparse import csr_matrix, dok_matrix
+from scipy.sparse import dok_matrix
 
 import project.utils
 from typing import Iterable, Union, Optional, Dict, Any, Set, Tuple
-from pyformlang.finite_automaton import (
-    DeterministicFiniteAutomaton,
-    NondeterministicFiniteAutomaton,
-    State,
-    EpsilonNFA,
-    Symbol,
-    Epsilon,
-)
+from pyformlang.finite_automaton import *
 from pyformlang.regular_expression import Regex
 
 
@@ -40,10 +33,11 @@ def get_nfa_from_graph(
     if type(graph) == str:
         graph: nt.MultiDiGraph = project.utils.get_graph_by_name(graph)
 
+    nodes = graph.nodes
     if start_states is None:
-        start_states = set(graph.nodes)
+        start_states = set(nodes)
     if final_states is None:
-        final_states = set(graph.nodes)
+        final_states = set(nodes)
 
     nfa = EpsilonNFA.from_networkx(graph)
 
@@ -62,7 +56,7 @@ def nfa_get_matrix(dfa: EpsilonNFA):
     """
     matrix = dict()
     dfa_dict = dfa.to_dict()
-    states_len = len(dfa.final_states)
+    states_len = len(dfa.states)
 
     state_idx = {state: idx for idx, state in enumerate(dfa.states)}
 
@@ -114,11 +108,11 @@ def nfa_union(fa1: EpsilonNFA, fa2: EpsilonNFA) -> EpsilonNFA:
     max_state_1 = nfa_get_max_state(fa1)
     fa3 = fa1.copy()
     for u, label, v in fa2:
-        fa3.add_transition(u + max_state_1, label, v + max_state_1)
+        fa3.add_transition(u.value + max_state_1, label, v.value + max_state_1)
     for v in fa2.start_states:
-        fa3.add_start_state(v + max_state_1)
+        fa3.add_start_state(v.value + max_state_1)
     for v in fa2.final_states:
-        fa3.add_final_state(v + max_state_1)
+        fa3.add_final_state(v.value + max_state_1)
     return fa3
 
 
@@ -128,7 +122,7 @@ def nfa_concat(fa1: EpsilonNFA, fa2: EpsilonNFA) -> EpsilonNFA:
     for t in fa1:
         fa3.add_transition(*t)
     for v, label, u in fa2:
-        fa3.add_transition(v + max_state_1, label, u + max_state_1)
+        fa3.add_transition(v.value + max_state_1, label, u.value + max_state_1)
 
     for state in fa1.start_states:
         fa3.add_start_state(state)
@@ -139,6 +133,8 @@ def nfa_concat(fa1: EpsilonNFA, fa2: EpsilonNFA) -> EpsilonNFA:
     for final1 in fa1.final_states:
         for start2 in fa2.start_states:
             fa3.add_transition(final1, Epsilon(), start2)
+
+    return fa3
 
 
 def nfa_production(fa1: EpsilonNFA, fa2: EpsilonNFA) -> EpsilonNFA:

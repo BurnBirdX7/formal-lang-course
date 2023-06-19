@@ -76,6 +76,7 @@ def execute_code(prog: str, file_out, file_err):
     except ParseTypeError as e:
         print("Type error occurred", file=file_err)
         print(e.value, file=file_err)
+        return
 
     try:
         executor = Executor(typer.variableTypes, typer.typeAnnotations, file_out)

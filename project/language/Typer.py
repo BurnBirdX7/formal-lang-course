@@ -343,7 +343,26 @@ class Typer(LanguageListener):
             )
         self.typeAnnotations[ctx] = typ
 
-    exitExprUnion = exitExprConcat
+    @staticmethod
+    def unionCompat(t1, t2) -> Type | None:
+        type_group = [StringType(), FAType(IntType())]
+        if t1 in type_group and t2 in type_group:
+            return FAType(IntType())
+
+        if type(t1) == SetType and t1 == t2:
+            return t2
+
+    def exitExprUnion(self, ctx: LanguageParser.ExprUnionContext):
+        t1, t2 = ctx.expr()
+        t1 = self.typeAnnotations.get(t1)
+        t2 = self.typeAnnotations.get(t2)
+        typ = self.unionCompat(t1, t2)
+        if not typ:
+            raise ParseTypeError(
+                f"{ctx.getText()}: operation is not possible between" f" {t1} and {t2}"
+            )
+
+        self.typeAnnotations[ctx] = typ
 
     def exitExprTransition(self, ctx: LanguageParser.ExprTransitionContext):
         t1 = ctx.expr()
