@@ -2,7 +2,6 @@ import io
 from typing import Tuple, Union
 
 import pytest
-
 from project.language.interpret import *
 
 

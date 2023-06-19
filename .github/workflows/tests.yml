@@ -35,4 +35,4 @@ jobs:
       run: antlr4 Language.g4 -Dlanguage=Python3 -o antlr_out
 
     - name: Run tests
-      run: python ./scripts/run_tests.py
+      run: pytest .
