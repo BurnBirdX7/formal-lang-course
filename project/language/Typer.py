@@ -30,7 +30,7 @@ class Typer(LanguageListener):
 
         self.bindToValue(patternType, exprType)  # type: ignore
 
-    def bindToValue(self, patternType: VarType | PatternType, exprType: Type):
+    def bindToValue(self, patternType: Union[VarType, PatternType], exprType: Type):
         if type(patternType) == VarType:
             if patternType.name in self.variableTypes:
                 raise ParseTypeError(f"Binding of {patternType.name} already exists")
@@ -56,7 +56,7 @@ class Typer(LanguageListener):
         for subpattern, typ in zip(pattern.description, tupleType.description):
             self.bindToValue(subpattern, typ)
 
-    def unbind(self, pattern: VarType | PatternType):
+    def unbind(self, pattern: Union[VarType, PatternType]):
         if type(pattern) == VarType:
             self.unbindVar(pattern.name)
         else:
@@ -126,7 +126,7 @@ class Typer(LanguageListener):
             LanguageParser.ExprMapContext, LanguageParser.ExprFilterContext
         ] = ctx.parentCtx
         expr = parentCtx.expr()
-        exprType: TupleType | SetType = self.typeAnnotations.get(expr)  # type: ignore
+        exprType = self.typeAnnotations.get(expr)  # type: ignore
         if type(exprType) != TupleType and type(exprType) != SetType:
             raise ParseTypeError(
                 f"{parentCtx.getText()}: Lambda cannot be bound to the type {exprType}"
@@ -273,7 +273,7 @@ class Typer(LanguageListener):
             )
 
         expr = ctx.expr()
-        exprType: SetType | TupleType = self.typeAnnotations.get(expr)
+        exprType = self.typeAnnotations.get(expr)
 
         if (type(exprType) != SetType and type(exprType) != TupleType) or (
             type(exprType) == TupleType and not exprType.is_uniform()
@@ -344,7 +344,7 @@ class Typer(LanguageListener):
         self.typeAnnotations[ctx] = typ
 
     @staticmethod
-    def unionCompat(t1, t2) -> Type | None:
+    def unionCompat(t1, t2) -> Optional[Type]:
         type_group = [StringType(), FAType(IntType())]
         if t1 in type_group and t2 in type_group:
             return FAType(IntType())
@@ -386,7 +386,6 @@ class Typer(LanguageListener):
                 f"{ctx.getText()}: operation is possible with sets and tuples"
             )
 
-        setType: SetType | TupleType
         if setType.element_type != valType:
             raise ParseTypeError(
                 f"{ctx.getText()}: its impossible to check value of type {valType} in {setType}"
