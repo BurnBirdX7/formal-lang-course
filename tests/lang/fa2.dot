@@ -1,0 +1,43 @@
+digraph  {
+1;
+2;
+3;
+4;
+5;
+6;
+7;
+8;
+9;
+10;
+0;
+11;
+12;
+13;
+14;
+15;
+16;
+17;
+18;
+19;
+1 -> 2  [key=0, label=QWE];
+2 -> 3  [key=0, label=QWE];
+3 -> 4  [key=0, label=QWE];
+4 -> 5  [key=0, label=QWE];
+5 -> 6  [key=0, label=QWE];
+6 -> 7  [key=0, label=QWE];
+7 -> 8  [key=0, label=QWE];
+8 -> 9  [key=0, label=QWE];
+9 -> 10  [key=0, label=QWE];
+10 -> 0  [key=0, label=QWE];
+0 -> 1  [key=0, label=QWE];
+0 -> 11  [key=0, label=RTY];
+11 -> 12  [key=0, label=RTY];
+12 -> 13  [key=0, label=RTY];
+13 -> 14  [key=0, label=RTY];
+14 -> 15  [key=0, label=RTY];
+15 -> 16  [key=0, label=RTY];
+16 -> 17  [key=0, label=RTY];
+17 -> 18  [key=0, label=RTY];
+18 -> 19  [key=0, label=RTY];
+19 -> 0  [key=0, label=RTY]
+}
