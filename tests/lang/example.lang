@@ -1,11 +1,12 @@
 // Загрузить граф "wine"
-let g' = load "test.dot";
+let g' = load "tests/lang/fa1.dot";
 
 // Установим все вершины графа финальными и вершины с 0 по 100 - стартовыми
 let g = set starts of (set finals of g' as (get_vertices of g')) as {0..100};
 
 // Язык из строк "l1" и "l2"
 let l1 = "l1" | "l2";
+print l1;
 
 // Объединение языков "type" и l1 и замыкание результирующего языка
 let q1 = ("type" | l1)*;

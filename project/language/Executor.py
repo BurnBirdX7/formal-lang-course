@@ -287,7 +287,7 @@ class Executor(LanguageVisitor):
         fa: EpsilonNFA = faPacked.value
         labelSet = set()
         for u, label, v in fa:
-            labelSet.add(label)
+            labelSet.add(label.value)
         return SetValue(labelSet)
 
     def visitExprIn(self, ctx: LanguageParser.ExprInContext):

@@ -92,7 +92,7 @@ def nfa_get_max_state(fa: EpsilonNFA) -> EpsilonNFA:
             max_state = val
         elif max_state < val:
             max_state = val
-    return max_state
+    return max_state + 1
 
 
 def nfa_closure(fa: EpsilonNFA) -> EpsilonNFA:

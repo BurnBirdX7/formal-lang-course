@@ -90,7 +90,7 @@ class TupleType(Type):
 
     def __str__(self):
         typeNames = map(str, self.description)
-        return "t[" + ", ".join(typeNames) + "]"
+        return "TupleType<" + ", ".join(typeNames) + ">"
 
     def __eq__(self, other):
         return super().__eq__(other) and self.description == other.description

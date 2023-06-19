@@ -1,0 +1,3 @@
+
+let g = "l1" | "l2";
+print g;
