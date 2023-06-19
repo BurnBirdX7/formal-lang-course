@@ -1,9 +1,9 @@
 import itertools
 from textwrap import dedent
 
-import pydot
 import pytest
-from project.language.language import *
+from project.language.DOTBuilder import *
+from project.language.interpret import does_belong_to_language
 
 valid = [
     # let:

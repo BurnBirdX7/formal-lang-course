@@ -11,43 +11,49 @@ print: 'print' expr;
 
 comment: COMMENT;
 
-pattern: var | '[' pattern (',' pattern)* ']';
+pattern:
+      VAR                            # patternVar
+    | '[' pattern (',' pattern)* ']' # patternPattern
+    ;
 
-var: VAR;
-val: STRING | INT | intSet;
+val: STRING | INT | intSet | tuple;
 
 intSet:
-      '{' '}'                   // empty set
-    | ('{' INT (',' INT)* '}')  // set of listed elements
-    | '{' INT '..' INT '}';     // set of integers in a certain range
+      '{' '}'                  # setEmpty   // empty set
+    | ('{' INT (',' INT)* '}') # setList    // set of listed elements
+    | '{' INT '..' INT '}'     # setRange   // set of integers in a certain range
+    ;
+
+tuple: '[' val (',' val)* ']';
 
 lambda:
     ('\\' | 'λ') pattern '->' expr;
 
 expr:
-      var                                 // переменные
-    | val                                 // константы
-    | 'set' 'starts' 'of' expr 'as' expr  // задать множество стартовых состояний
-    | 'set' 'finals' 'of' expr 'as' expr  // задать множество финальных состояний
+      VAR                                # exprVar          // переменные
+    | val                                # exprVal          // константы
+    | 'set' 'starts' 'of' expr 'as' expr # exprSetStarts    // задать множество стартовых состояний
+    | 'set' 'finals' 'of' expr 'as' expr # exprSetFinals    // задать множество финальных состояний
 
-    | 'add' expr 'as' 'starts' 'of' expr // добавить состояния в множество стартовых
-    | 'add' expr 'as' 'finals' 'of' expr // добавить состояния в множество финальных
-    | 'get_starts' 'of' expr           // получить множество стартовых состояний
-    | 'get_finals' 'of' expr           // получить множество финальных состояний
-    | 'get_reachable' 'of' expr        // получить все пары достижимых вершин
-    | 'get_vertices' 'of' expr         // получить все вершины
-    | 'get_edges' 'of' expr            // получить все рёбра
-    | 'get_labels' 'of' expr           // получить все метки
-    | 'map' expr 'with' lambda           // классический map
-    | 'filter' expr 'with' lambda        // классический filter
-    | 'load' (var | STRING)              // загрузка графа
-    | expr '&' expr                      // пересечение языков
-    | expr '++' expr                     // конкатенация языков
-    | expr '|' expr                      // объединение языков
-    | expr '*'                           // замыкание языков (звезда Клини)
-    | 'tans' expr                        // единичный переход
-    | expr 'in' expr
-    | '(' expr ')';
+    | 'add' expr 'as' 'starts' 'of' expr # exprAddStarts    // добавить состояния в множество стартовых
+    | 'add' expr 'as' 'finals' 'of' expr # exprAddFinals    // добавить состояния в множество финальных
+    | 'get_starts' 'of' expr             # exprGetStarts    // получить множество стартовых состояний
+    | 'get_finals' 'of' expr             # exprGetFinals    // получить множество финальных состояний
+    | 'get_reachable' 'of' expr          # exprGetReachable // получить все пары достижимых вершин
+    | 'get_vertices' 'of' expr           # exprGetVertices  // получить все вершины
+    | 'get_edges' 'of' expr              # exprGetEdges     // получить все рёбра
+    | 'get_labels' 'of' expr             # exprGetLabels    // получить все метки
+    | 'map' expr 'with' lambda           # exprMap          // классический map
+    | 'filter' expr 'with' lambda        # exprFilter       // классический filter
+    | 'load' (VAR | val)                 # exprLoad         // загрузка графа
+    | expr '&' expr                      # exprProduct      // пересечение языков
+    | expr '++' expr                     # exprConcat       // конкатенация языков
+    | expr '|' expr                      # exprUnion        // объединение языков
+    | expr '*'                           # exprKleene       // замыкание языков (звезда Клини)
+    | 'trans' expr                       # exprTransition   // единичный переход
+    | expr 'in' expr                     # exprIn
+    | '(' expr ')'                       # exprBraced
+    ;
 
 VAR: [a-zA-Z_][a-zA-Z0-9_']*;
 STRING: '"' ~["]* '"'; // to allow string to contain escaped characters
