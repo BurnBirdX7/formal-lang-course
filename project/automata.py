@@ -161,19 +161,19 @@ def nfa_production(fa1: EpsilonNFA, fa2: EpsilonNFA) -> EpsilonNFA:
     for symb, mat in common_matrices.items():
         from_idx, to_idx = mat.nonzero()
         for fro, to in zip(from_idx, to_idx):
-            from1 = states1[fro // fa2_state_count]
-            to1 = states1[to // fa2_state_count]
-            from2 = states2[fro % fa2_state_count]
-            to2 = states2[to % fa2_state_count]
+            from1 = states1[fro // fa2_state_count].value
+            to1 = states1[to // fa2_state_count].value
+            from2 = states2[fro % fa2_state_count].value
+            to2 = states2[to % fa2_state_count].value
             result.add_transition(State((from1, from2)), symb, State((to1, to2)))
 
     for s1 in fa1.start_states:
         for s2 in fa2.start_states:
-            result.add_start_state(State((s1, s2)))
+            result.add_start_state(State((s1.value, s2.value)))
 
     for s1 in fa1.final_states:
         for s2 in fa2.final_states:
-            result.add_final_state(State((s1, s2)))
+            result.add_final_state(State((s1.value, s2.value)))
 
     return result
 

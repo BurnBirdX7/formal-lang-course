@@ -1,8 +1,7 @@
-from typing import List, Union, Any
+from typing import List, Union, Any, Set
 
 from antlr4 import ParserRuleContext
-
-from project.language.Value import *
+from pyformlang.finite_automaton import EpsilonNFA, State, Symbol
 
 
 class ParseTypeError(RuntimeError):
@@ -20,6 +19,12 @@ class Type:
 
     def is_type(self, val: Any):
         raise NotImplementedError()
+
+    def print_value(self, value: Any, file):
+        print(self.str_value(value) + f" :: {self}", file=file)
+
+    def str_value(self, value: Any):
+        return str(value)
 
 
 class NoneType(Type):
@@ -39,6 +44,9 @@ class BoolType(Type):
     def is_type(self, val: Any):
         return type(val) == bool
 
+    def str_value(self, value: Any):
+        return str(value)
+
 
 class IntType(Type):
     def is_type(self, val: Any):
@@ -56,13 +64,17 @@ class SetType(Type):
         return super().__eq__(other) and self.element_type == other.element_type
 
     def is_type(self, val: Any):
-        if type(val) != SetValue:
+        if type(val) != set:
             return False
-        val: SetValue
-        for elem in val.value:
+        val: set
+        for elem in val:
             if not self.element_type.is_type(elem):
                 return False
         return True
+
+    def str_value(self, value: Set[Any]):
+        elems = map(self.element_type.str_value, value)
+        return "{ " + ", ".join(elems) + " }"
 
 
 class StringType(Type):
@@ -81,7 +93,23 @@ class FAType(Type):
         return super().__eq__(other) and self.vertexType == other.vertexType
 
     def is_type(self, val: Any):
-        return type(val) == FAValue
+        return type(val) == EpsilonNFA
+
+    def str_value(self, value: EpsilonNFA):
+        addr = str(value)
+
+        def get_set(value: Set[Union[State, Symbol]]) -> Set[Any]:
+            return set(map(lambda s: s.value, value))
+
+        starts = SetType(self.vertexType).str_value(get_set(value.start_states))
+        finals = SetType(self.vertexType).str_value(get_set(value.final_states))
+        symbols = SetType(StringType()).str_value(get_set(value.symbols))
+        return (
+            f"FA: {addr}\n"
+            f"starts: {starts}\n"
+            f"finals: {finals}\n"
+            f"symbols: {symbols}"
+        )
 
 
 class TupleType(Type):
@@ -106,6 +134,12 @@ class TupleType(Type):
 
         return True
 
+    def str_value(self, value: tuple):
+        str_vals = []
+        for elem, typ in zip(value, self.description):
+            str_vals.append(typ.str_value(elem))
+        return "[ " + ", ".join(str_vals) + " ]"
+
     @property
     def element_type(self) -> Type:
         if self.is_uniform():
@@ -113,9 +147,10 @@ class TupleType(Type):
         raise ParseTypeError("Tried to get element type for not uniform tuple")
 
     def is_type(self, val: Any):
-        if type(val) != TupleValue:
+        if type(val) != tuple:
             return False
-        for (elem, typ) in zip(val.value, self.description):
+        val: tuple
+        for (elem, typ) in zip(val, self.description):
             if not typ.is_type(elem):
                 return False
         return True
@@ -156,3 +191,6 @@ class LambdaType(Type):
 
     def is_type(self, val: Any):
         return val is None  # Lambda has no value
+
+    def str_value(self, value: None):
+        return "<lambda>"

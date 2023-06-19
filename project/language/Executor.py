@@ -28,27 +28,28 @@ class Executor(LanguageVisitor):
         self.fileOut = file_out
 
     def visitChildren(self, node):
-        result = self.defaultResult()
+        result = []
         n = node.getChildCount()
         for i in range(n):
             if not self.shouldVisitNextChild(node, result):
                 return result
 
             c = node.getChild(i)
-            childResult = self.visit(c)  # difference in this line
+            childResult = self.visit(c)  # use visit instead of accept
             result = self.aggregateResult(result, childResult)
 
+        if len(result) == 0:
+            return None
+        if len(result) == 1:
+            return result[0]
         return result
 
-    def aggregateResult(self, aggregate, nextResult):
+    def aggregateResult(self, aggregate: List[Any], nextResult: Any) -> List[Any]:
         if nextResult is None:
             return aggregate
 
-        if aggregate is None:
-            return nextResult
-        if type(aggregate) == list:
-            return aggregate + [nextResult]
-        return [aggregate, nextResult]
+        aggregate.append(nextResult)
+        return aggregate
 
     def visit(self, tree):
         result = tree.accept(self)
@@ -61,7 +62,7 @@ class Executor(LanguageVisitor):
             raise ExecutionError(
                 "Expression value has incorrect type.\n"
                 f"Expected type: {typ}\n"
-                f"Expression value: {result} [py-type {type(result)}]"
+                f"Expression value: {result} [type {type(result)}]"
             )
         self.valueAnnotations[tree] = result
         return result
@@ -117,10 +118,7 @@ class Executor(LanguageVisitor):
         val = self.valueAnnotations.get(ctx.expr())
         typ = self.typeAnnotations.get(ctx.expr())
 
-        if val is None:
-            print(f"<None> :: {typ}", file=self.fileOut)
-        else:
-            print(f"{val!s} :: {typ!s}", file=self.fileOut)
+        typ.print_value(val, self.fileOut)
 
     def visitVal(self, ctx: LanguageParser.ValContext):
         self.visitChildren(ctx)
@@ -137,20 +135,20 @@ class Executor(LanguageVisitor):
         return val
 
     def visitSetEmpty(self, ctx: LanguageParser.SetEmptyContext):
-        return SetValue(set())
+        return set()
 
     def visitSetList(self, ctx: LanguageParser.SetListContext):
         intSet: Set[int] = set()
         for lit in ctx.INT():
             intSet.add(int(lit.getText()))
-        return SetValue(intSet)
+        return intSet
 
     def visitSetRange(self, ctx: LanguageParser.SetRangeContext):
         start, end = ctx.INT()
         start = int(start.getText())
         end = int(end.getText())
         intSet = set(range(start, end + 1))
-        return SetValue(intSet)
+        return intSet
 
     def visitTuple(self, ctx: LanguageParser.TupleContext):
         self.visitChildren(ctx)
@@ -158,40 +156,45 @@ class Executor(LanguageVisitor):
         for val in ctx.val():
             tup.append(self.valueAnnotations.get(val))
 
-        return TupleValue(tup)
+        return tuple(tup)
 
     def visitLambda(self, ctx: LanguageParser.LambdaContext):
         return  # Lambda has no value, only type
 
     @staticmethod
     def underlying_values(states: Iterable[State]) -> Set:
+        """
+        Extracts inner values from Container of States
+        :param states: any iterable of State
+        :return: Set of their inner values
+        """
         return set(map(lambda s: s.value, states))
 
     def visitExprGetStarts(self, ctx: LanguageParser.ExprGetStartsContext):
-        faPacked = self.visitChildren(ctx)
-        fa: EpsilonNFA = faPacked.value
-        return SetValue(self.underlying_values(fa.start_states))
+        fa: EpsilonNFA = self.visitChildren(ctx)
+        return self.underlying_values(fa.start_states)
 
     def visitExprTransition(self, ctx: LanguageParser.ExprTransitionContext):
         return super().visitExprTransition(ctx)
 
     def visitExprAddFinals(self, ctx: LanguageParser.ExprAddFinalsContext):
-        faPacked, startsPacked = self.visitChildren(ctx)
-        fa: EpsilonNFA = faPacked.value.copy()
+        fa, starts = self.visitChildren(ctx)
+        fa: EpsilonNFA = fa.copy()
+        starts: set
         for state in fa.final_states:
             fa.remove_final_state(state)
-        for state in startsPacked.value:
+        for state in starts:
             fa.add_final_state(state)
-        return FAValue(fa)
+        return fa
 
     def visitExprVar(self, ctx: LanguageParser.ExprVarContext):
         return self.variableValues.get(ctx.VAR().getText())
 
     def visitExprFilter(self, ctx: LanguageParser.ExprFilterContext):
         lambda_: LambdaType = self.typeAnnotations.get(ctx.lambda_())
-        exprVal: Union[TupleValue, SetValue] = self.visit(ctx.expr())
+        exprVal: Union[tuple, set] = self.visit(ctx.expr())
         resultSet = set()
-        for elem in exprVal.value:
+        for elem in exprVal:
             self.bindValue(lambda_.pattern, elem)
             self.bindType(lambda_.pattern, lambda_.patternType)
             ret = self.visit(lambda_.body)
@@ -199,53 +202,52 @@ class Executor(LanguageVisitor):
             if ret:
                 resultSet.add(elem)
 
-        return SetValue(resultSet)
+        return resultSet
 
     def visitExprUnion(self, ctx: LanguageParser.ExprUnionContext):
-        fa1Packed, fa2Packed = self.visitChildren(ctx)
+        fa1, fa2 = self.visitChildren(ctx)
 
-        if type(fa1Packed) == SetValue and type(fa2Packed) == SetValue:
-            return SetValue(fa1Packed.value.union(fa2Packed.value))
+        if type(fa1) == set and type(fa2) == set:
+            return fa1.union(fa2)
 
-        f1, f2 = Executor.get_2_nfas(fa1Packed, fa2Packed)
+        f1, f2 = Executor.get_2_nfas(fa1, fa2)
 
-        return FAValue(nfa_union(f1, f2))
+        return nfa_union(f1, f2)
 
     def visitExprSetFinals(self, ctx: LanguageParser.ExprSetFinalsContext):
-        faPacked, startsPacked = self.visitChildren(ctx)
-        fa: EpsilonNFA = faPacked.value.copy()
-        for state in faPacked.value.final_states:
+        fa_old, startsPacked = self.visitChildren(ctx)
+        fa: EpsilonNFA = fa_old.copy()
+        startsPacked: set
+        for state in fa_old.final_states:
             fa.remove_final_state(state)
-        for state in startsPacked.value:
+        for state in startsPacked:
             fa.add_final_state(state)
-        return FAValue(fa)
+        return fa
 
     def visitExprAddStarts(self, ctx: LanguageParser.ExprAddStartsContext):
-        faPacked, startsPacked = self.visitChildren(ctx)
-        fa: EpsilonNFA = faPacked.value.copy()
-        for state in startsPacked.value:
+        fa_old, starts = self.visitChildren(ctx)
+        fa: EpsilonNFA = fa_old.copy()
+        for state in starts:
             fa.add_start_state(state)
-        return FAValue(fa)
+        return fa
 
     def visitExprGetVertices(self, ctx: LanguageParser.ExprGetVerticesContext):
         faPacked = self.visitChildren(ctx)
-        fa: EpsilonNFA = faPacked.value
-        return SetValue(self.underlying_values(fa.states))
+        fa: EpsilonNFA = faPacked
+        return self.underlying_values(fa.states)
 
     def visitExprGetEdges(self, ctx: LanguageParser.ExprGetEdgesContext):
-        faPacked = super().visitExprGetEdges(ctx)
-        fa: EpsilonNFA = faPacked.value
+        fa = self.visitChildren(ctx)
+        fa: EpsilonNFA
         edgeSet = set()
         for u, label, v in fa:
-            edge = TupleValue([u, label, v])
+            edge = (u.value, label.value, v.value)
             edgeSet.add(edge)
-        return SetValue(edgeSet)
+        return edgeSet
 
     def visitExprGetReachable(self, ctx: LanguageParser.ExprGetReachableContext):
-        packedVal = self.visitChildren(ctx)
-        reachable = nfa_reachable(packedVal.value)
-        reachable_tuples = map(lambda elem: TupleValue(elem), reachable)
-        return SetValue(set(reachable_tuples))
+        val = self.visitChildren(ctx)
+        return nfa_reachable(val)
 
     def visitExprLoad(self, ctx: LanguageParser.ExprLoadContext):
         if ctx.VAR():
@@ -277,33 +279,37 @@ class Executor(LanguageVisitor):
                 f"{ctx.getText()}: Vertices of a graph must be convertable to int to be loaded"
             )
 
-        return FAValue(fa)
+        return fa
 
     def visitExprGetFinals(self, ctx: LanguageParser.ExprGetFinalsContext):
-        faPacked = self.visitChildren(ctx)
-        fa: EpsilonNFA = faPacked.value
-        return SetValue(self.underlying_values(fa.final_states))
+        fa = self.visitChildren(ctx)
+        fa: EpsilonNFA
+        return self.underlying_values(fa.final_states)
 
     def visitExprGetLabels(self, ctx: LanguageParser.ExprGetLabelsContext):
-        faPacked = super().visitExprGetEdges(ctx)
-        fa: EpsilonNFA = faPacked.value
+        fa = self.visitChildren(ctx)
+        fa: EpsilonNFA
         labelSet = set()
-        for u, label, v in fa:
-            labelSet.add(label.value)
-        return SetValue(labelSet)
+        for u, symbol, v in fa:
+            labelSet.add(symbol.value)
+        return labelSet
 
     def visitExprIn(self, ctx: LanguageParser.ExprInContext):
         val, cont = self.visitChildren(ctx)
-        return val in cont.value
+        val: Any
+        cont: Iterable[Any]
+        return val in cont
 
     @staticmethod
-    def get_2_nfas(fa1Packed: Union[FAValue, str], fa2Packed: Union[FAValue, str]):
-        if type(fa1Packed) == FAValue:
-            f1 = fa1Packed.value
+    def get_2_nfas(
+        fa1Packed: Union[EpsilonNFA, str], fa2Packed: Union[EpsilonNFA, str]
+    ):
+        if type(fa1Packed) == EpsilonNFA:
+            f1 = fa1Packed
         else:
             f1 = nfa_from_string(fa1Packed)
-        if type(fa2Packed) == FAValue:
-            f2 = fa2Packed.value
+        if type(fa2Packed) == EpsilonNFA:
+            f2 = fa2Packed
         else:
             f2 = nfa_from_string(fa2Packed)
         return f1, f2
@@ -314,34 +320,35 @@ class Executor(LanguageVisitor):
             return fa1Packed + fa2Packed
 
         f1, f2 = Executor.get_2_nfas(fa1Packed, fa2Packed)
-        return FAValue(nfa_concat(f1, f2))
+        return nfa_concat(f1, f2)
 
     def visitExprKleene(self, ctx: LanguageParser.ExprKleeneContext):
         fa = self.visitChildren(ctx)
-        return FAValue(nfa_closure(fa.value))
+        return nfa_closure(fa)
 
     def visitExprSetStarts(self, ctx: LanguageParser.ExprSetStartsContext):
         faPacked, startsPacked = self.visitChildren(ctx)
-        fa: EpsilonNFA = faPacked.value.copy()
-        for state in faPacked.value.start_states:
+        fa: EpsilonNFA = faPacked.copy()
+        startsPacked: set
+        for state in faPacked.start_states:
             fa.remove_start_state(state)
-        for state in startsPacked.value:
+        for state in startsPacked:
             fa.add_start_state(state)
-        return FAValue(fa)
+        return fa
 
     def visitExprMap(self, ctx: LanguageParser.ExprMapContext):
         lambda_: LambdaType = self.typeAnnotations.get(ctx.lambda_())
-        exprVal: Union[TupleValue, SetValue] = self.visit(ctx.expr())
+        exprVal: Union[tuple, set] = self.visit(ctx.expr())
         resultSet = set()
-        for elem in exprVal.value:
+        for elem in exprVal:
             self.bindValue(lambda_.pattern, elem)
             self.bindType(lambda_.pattern, lambda_.patternType)
             ret = self.visit(lambda_.body)
             self.unbind(lambda_.pattern)
             resultSet.add(ret)
 
-        return SetValue(resultSet)
+        return resultSet
 
     def visitExprProduct(self, ctx: LanguageParser.ExprProductContext):
         fa1Packed, fa2Packed = self.visitChildren(ctx)
-        return FAValue(nfa_production(fa1Packed.value, fa2Packed.value))
+        return nfa_production(fa1Packed, fa2Packed)
