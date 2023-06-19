@@ -69,7 +69,7 @@ class Executor(LanguageVisitor):
     def visitProgram(self, ctx: LanguageParser.ProgramContext):
         return super().visitChildren(ctx)
 
-    def unbind(self, pattern: VarType | PatternType):
+    def unbind(self, pattern: Union[VarType, PatternType]):
         if type(pattern) == VarType:
             self.variableValues.pop(pattern.name)
             self.variableTypes.pop(pattern.name)
@@ -77,7 +77,9 @@ class Executor(LanguageVisitor):
             for subpattern in pattern.description:
                 self.unbind(subpattern)
 
-    def bindType(self, pattern: VarType | PatternType, value: Type | TupleType):
+    def bindType(
+        self, pattern: Union[VarType, PatternType], value: Union[Type, TupleType]
+    ):
         if type(pattern) == VarType:
             self.bindTypeToVar(pattern, value)
         else:
@@ -90,7 +92,7 @@ class Executor(LanguageVisitor):
         for subpattern, val in zip(pattern.description, tupleType.description):
             self.bindType(subpattern, tupleType)
 
-    def bindValue(self, pattern: VarType | PatternType, value: Any):
+    def bindValue(self, pattern: Union[VarType, PatternType], value: Any):
         if type(pattern) == VarType:
             self.bindValueToVar(pattern, value)
         else:
@@ -105,7 +107,7 @@ class Executor(LanguageVisitor):
 
     def visitBind(self, ctx: LanguageParser.BindContext):
         self.visit(ctx.expr())  # we do not need to visit pattern
-        pattern: VarType | PatternType = self.typeAnnotations.get(ctx.pattern())  # type: ignore
+        pattern: Union[VarType, PatternType] = self.typeAnnotations.get(ctx.pattern())  # type: ignore
         expr = self.valueAnnotations.get(ctx.expr())
         self.valueAnnotations[ctx.pattern()] = expr
         self.bindValue(pattern, expr)
@@ -187,7 +189,7 @@ class Executor(LanguageVisitor):
 
     def visitExprFilter(self, ctx: LanguageParser.ExprFilterContext):
         lambda_: LambdaType = self.typeAnnotations.get(ctx.lambda_())
-        exprVal: TupleValue | SetValue = self.visit(ctx.expr())
+        exprVal: Union[TupleValue, SetValue] = self.visit(ctx.expr())
         resultSet = set()
         for elem in exprVal.value:
             self.bindValue(lambda_.pattern, elem)
@@ -291,12 +293,11 @@ class Executor(LanguageVisitor):
         return SetValue(labelSet)
 
     def visitExprIn(self, ctx: LanguageParser.ExprInContext):
-        cont: TupleValue | SetValue
         val, cont = self.visitChildren(ctx)
         return val in cont.value
 
     @staticmethod
-    def get_2_nfas(fa1Packed: FAValue | str, fa2Packed: FAValue | str):
+    def get_2_nfas(fa1Packed: Union[FAValue, str], fa2Packed: Union[FAValue, str]):
         if type(fa1Packed) == FAValue:
             f1 = fa1Packed.value
         else:
@@ -330,7 +331,7 @@ class Executor(LanguageVisitor):
 
     def visitExprMap(self, ctx: LanguageParser.ExprMapContext):
         lambda_: LambdaType = self.typeAnnotations.get(ctx.lambda_())
-        exprVal: TupleValue | SetValue = self.visit(ctx.expr())
+        exprVal: Union[TupleValue, SetValue] = self.visit(ctx.expr())
         resultSet = set()
         for elem in exprVal.value:
             self.bindValue(lambda_.pattern, elem)
