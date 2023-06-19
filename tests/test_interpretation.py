@@ -1,5 +1,5 @@
 import io
-from typing import Tuple
+from typing import Tuple, Union
 
 import pytest
 
@@ -149,13 +149,19 @@ def test_tuple_noval():
         ("get_starts of fa", "{ 0, 2 } :: SetType<IntType>"),
         ("get_finals of fa", "{ 1, 3 } :: SetType<IntType>"),
         ("get_vertices of fa", "{ 0, 1, 2, 3 } :: SetType<IntType>"),
-        ("get_labels of fa", "{ l2, l1 } :: SetType<StringType>"),
+        (
+            "get_labels of fa",
+            ("{ l2, l1 } :: SetType<StringType>", "{ l1, l2 } :: SetType<StringType>"),
+        ),
     ],
 )
-def test_simple_fa(action: str, expected: str):
+def test_simple_fa(action: str, expected: Union[str, Tuple[str, str]]):
     fa_def = 'let fa = "l1" | "l2";\n'
     prog = fa_def + "print " + action + ";"
     print(prog)
     out, err = interpret(prog)
+    if type(expected) == tuple:
+        assert out == expected[0] or out == expected[1]
+    else:
+        assert out == expected
     assert err == ""
-    assert out == expected
