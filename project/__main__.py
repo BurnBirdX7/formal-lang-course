@@ -11,6 +11,8 @@ def online():
     executor = Executor(typer.variableTypes, typer.typeAnnotations, sys.stdout)
     walker = ParseTreeWalker()
 
+    print("Hello! Input 'q' to exit")
+
     while True:
         prog = input(" >>> ")
         if prog == "q":
@@ -39,7 +41,11 @@ def online():
 
 def main(argv):
     if len(argv) != 2:
-        online()
+        try:
+            online()
+        except Exception as e:
+            print(f"Internal error occurred, stopping...")
+            print(e)
         return
 
     with open(argv[1], "r", encoding="utf-8") as f:

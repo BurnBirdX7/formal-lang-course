@@ -1,5 +1,5 @@
 // Загрузить граф "wine"
-let g' = load "tests/lang/fa1.dot";
+let g' = load "tests/lang/fa2.dot";
 
 // Установим все вершины графа финальными и вершины с 0 по 100 - стартовыми
 let g = set starts of (set finals of g' as (get_vertices of g')) as {0..100};

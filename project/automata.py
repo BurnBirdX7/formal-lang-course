@@ -1,5 +1,3 @@
-import sys
-
 import networkx as nt
 from numpy import kron
 from scipy.sparse import dok_matrix
@@ -50,15 +48,15 @@ def get_nfa_from_graph(
     return nfa
 
 
-def nfa_get_matrix(dfa: EpsilonNFA):
+def nfa_get_matrix(fa: EpsilonNFA):
     """
     Returns adjacency matrices for single DFA
     """
     matrix = dict()
-    dfa_dict = dfa.to_dict()
-    states_len = len(dfa.states)
+    dfa_dict = fa.to_dict()
+    states_len = len(fa.states)
 
-    state_idx = {state: idx for idx, state in enumerate(dfa.states)}
+    state_idx = {state: idx for idx, state in enumerate(fa.states)}
 
     for state_from, transition in dfa_dict.items():
         for label, states_to in transition.items():
@@ -82,7 +80,7 @@ def nfa_from_string(string: str) -> EpsilonNFA:
     return fa
 
 
-def nfa_get_max_state(fa: EpsilonNFA) -> EpsilonNFA:
+def nfa_get_max_state(fa: EpsilonNFA) -> int:
     max_state = None
     for s in fa.states:
         val = s.value
@@ -92,6 +90,9 @@ def nfa_get_max_state(fa: EpsilonNFA) -> EpsilonNFA:
             max_state = val
         elif max_state < val:
             max_state = val
+
+    if max_state is None:
+        return 0
     return max_state + 1
 
 
@@ -154,7 +155,7 @@ def nfa_production(fa1: EpsilonNFA, fa2: EpsilonNFA) -> EpsilonNFA:
     states2 = {i: k for k, i in state2_idx.items()}
     common_symbols = set(mat1.keys()).intersection(mat2.keys())
 
-    common_matrices = {l: kron(mat1[l], mat2[l]) for l in common_symbols}
+    common_matrices = {symb: kron(mat1[symb], mat2[symb]) for symb in common_symbols}
 
     result = EpsilonNFA()
 

@@ -165,3 +165,22 @@ def test_simple_fa(action: str, expected: Union[str, Tuple[str, str]]):
     else:
         assert out == expected
     assert err == ""
+
+
+def test_file_read():
+    text = """
+    let a = load "tests/lang/fa1.dot";
+    print a;
+    """
+    out, err = interpret(text)
+    assert err == ""
+    assert len(out) > 0
+
+
+def test_example():
+    with open("tests/lang/example.lang", "r", encoding="utf-8") as f:
+        prog = f.read()
+
+    out, err = interpret(prog)
+    assert err == ""
+    assert len(out) > 0

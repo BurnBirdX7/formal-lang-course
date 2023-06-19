@@ -257,7 +257,13 @@ class Executor(LanguageVisitor):
         else:
             raise ExecutionError("Unreachable code")
 
-        graph = nx.nx_pydot.read_dot(file)
+        try:
+            graph = nx.nx_pydot.read_dot(file)
+        except FileNotFoundError as e:
+            raise ExecutionError(f"File {file} not found // {e}")
+        except Exception as e:
+            raise ExecutionError(f"Unexpected exception {e}")
+
         file_fa = get_nfa_from_graph(graph, graph.nodes, graph.nodes)
 
         fa = EpsilonNFA()  # Convert States to int
@@ -274,7 +280,7 @@ class Executor(LanguageVisitor):
 
             for s in file_fa.final_states:
                 fa.add_final_state(convert(s))
-        except TypeError:
+        except ValueError:
             raise ExecutionError(
                 f"{ctx.getText()}: Vertices of a graph must be convertable to int to be loaded"
             )
