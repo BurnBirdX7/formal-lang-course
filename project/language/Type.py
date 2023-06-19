@@ -1,11 +1,14 @@
-from typing import List, Union
+from typing import List, Union, Any
 
 from antlr4 import ParserRuleContext
 
+from project.language.Value import *
 
-class ParseTypeError(StopIteration):
+
+class ParseTypeError(RuntimeError):
     def __init__(self, msg: str):
         super().__init__(msg)
+        self.value = msg
 
 
 class Type:
@@ -15,9 +18,13 @@ class Type:
     def __str__(self):
         return type(self).__name__
 
+    def is_type(self, val: Any):
+        raise NotImplementedError()
+
 
 class NoneType(Type):
-    pass
+    def is_type(self, val: Any):
+        return val is None
 
 
 class VarType(Type):
@@ -29,11 +36,13 @@ class VarType(Type):
 
 
 class BoolType(Type):
-    pass
+    def is_type(self, val: Any):
+        return type(val) == bool
 
 
 class IntType(Type):
-    pass
+    def is_type(self, val: Any):
+        return type(val) == int
 
 
 class SetType(Type):
@@ -46,9 +55,19 @@ class SetType(Type):
     def __eq__(self, other):
         return super().__eq__(other) and self.element_type == other.element_type
 
+    def is_type(self, val: Any):
+        if type(val) != SetValue:
+            return False
+        val: SetValue
+        for elem in val.value:
+            if not self.element_type.is_type(elem):
+                return False
+        return True
+
 
 class StringType(Type):
-    pass
+    def is_type(self, val: Any):
+        return type(val) == str
 
 
 class FAType(Type):
@@ -60,6 +79,9 @@ class FAType(Type):
 
     def __eq__(self, other):
         return super().__eq__(other) and self.vertexType == other.vertexType
+
+    def is_type(self, val: Any):
+        return type(val) == FAValue
 
 
 class TupleType(Type):
@@ -89,6 +111,14 @@ class TupleType(Type):
         if self.is_uniform():
             return self.description[0]
         raise ParseTypeError("Tried to get element type for not uniform tuple")
+
+    def is_type(self, val: Any):
+        if type(val) != TupleValue:
+            return False
+        for (elem, typ) in zip(val.value, self.description):
+            if not typ.is_type(elem):
+                return False
+        return True
 
 
 class PatternType(Type):
@@ -123,3 +153,6 @@ class LambdaType(Type):
 
     def __str__(self):
         return f"LambdaType<{self.patternType} -> {self.returnType}>"
+
+    def is_type(self, val: Any):
+        return val is None  # Lambda has no value

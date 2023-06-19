@@ -16,11 +16,16 @@ from project.automata import (
 
 from project.language.antlr_out.LanguageVisitor import LanguageVisitor
 from project.language.antlr_out.LanguageParser import LanguageParser
-from project.language.Value import *
 from project.language.Type import *
 
 from project.language.Typer import Typer
 from project.language.DOTBuilder import get_parser
+
+
+class ExecutionError(RuntimeError):
+    def __init__(self, msg: str):
+        super().__init__(msg)
+        self.value = msg
 
 
 def execute_code(prog):
@@ -75,6 +80,17 @@ class Executor(LanguageVisitor):
 
     def visit(self, tree):
         result = tree.accept(self)
+        typ = self.typeAnnotations.get(tree)
+        if (
+            not isinstance(tree, TerminalNode)
+            and typ is not None
+            and not typ.is_type(result)
+        ):
+            raise ExecutionError(
+                "Expression value has incorrect type.\n"
+                f"Expected type: {typ}\n"
+                f"Expression value: {result} [py-type {type(result)}]"
+            )
         self.valueAnnotations[tree] = result
         return result
 
@@ -143,7 +159,7 @@ class Executor(LanguageVisitor):
         elif ctx.intSet():
             val = self.valueAnnotations.get(ctx.intSet())
         else:
-            raise RuntimeError("Unreachable")
+            raise ExecutionError("Unreachable code")
         return val
 
     def visitSetEmpty(self, ctx: LanguageParser.SetEmptyContext):
@@ -260,7 +276,7 @@ class Executor(LanguageVisitor):
         elif ctx.val():
             file = self.visit(ctx.val())
         else:
-            raise RuntimeError("Unreachable code")
+            raise ExecutionError("Unreachable code")
 
         graph = nx.nx_pydot.read_dot(file)
         fa = get_nfa_from_graph(graph, graph.nodes, graph.nodes)

@@ -1,9 +1,7 @@
 import sys
 from antlr4 import *
-from project.language.DOTBuilder import DOTBuilder
-import pydot
 
-from project.language.Executor import Executor
+from project.language.Executor import Executor, ExecutionError
 from project.language.Type import ParseTypeError
 from project.language.Typer import Typer
 from project.language.antlr_out.LanguageLexer import LanguageLexer
@@ -35,9 +33,9 @@ def main(argv):
     try:
         executor = Executor(typer.variableTypes, typer.typeAnnotations)
         executor.visit(program_tree)
-    except RuntimeError as e:
+    except ExecutionError as e:
         print("Error occurred during execution", file=sys.stderr)
-        print(e, file=sys.stderr)
+        print(e.value, file=sys.stderr)
 
 
 if __name__ == "__main__":
