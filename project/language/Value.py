@@ -12,7 +12,8 @@ class TupleValue(Value):
         self.value = list(value)
 
     def __str__(self):
-        return str(self.value)
+        val = map(str, self.value)
+        return "[ " + ", ".join(val) + " ]"
 
 
 class FAValue(Value):
@@ -31,6 +32,5 @@ class SetValue(Value):
         self.value = value
 
     def __str__(self):
-        if len(self.value) == 0:
-            return "{ }"
-        return str(self.value)
+        val = map(str, self.value)
+        return "{ " + ", ".join(val) + " }"

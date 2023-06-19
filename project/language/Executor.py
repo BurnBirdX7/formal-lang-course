@@ -1,11 +1,18 @@
 import sys
-from typing import Dict, Any, List, Set, Tuple, Optional, Iterable
+from typing import Dict
 
 import networkx as nx
 from antlr4 import *
-from pyformlang.finite_automaton import EpsilonNFA
 
-from project.automata import get_nfa_from_graph
+from project.automata import (
+    get_nfa_from_graph,
+    nfa_production,
+    nfa_reachable,
+    nfa_union,
+    nfa_from_string,
+    nfa_concat,
+    nfa_closure,
+)
 
 from project.language.antlr_out.LanguageVisitor import LanguageVisitor
 from project.language.antlr_out.LanguageParser import LanguageParser
@@ -201,7 +208,14 @@ class Executor(LanguageVisitor):
         return SetValue(resultSet)
 
     def visitExprUnion(self, ctx: LanguageParser.ExprUnionContext):
-        return super().visitExprUnion(ctx)
+        fa1Packed, fa2Packed = self.visitChildren(ctx)
+
+        if type(fa1Packed) == str and type(fa2Packed) == str:
+            return fa1Packed + fa2Packed
+
+        f1, f2 = Executor.get_2_nfas(fa1Packed, fa2Packed)
+
+        return nfa_union(f1, f2)
 
     def visitExprSetFinals(self, ctx: LanguageParser.ExprSetFinalsContext):
         faPacked, startsPacked = self.visitVal(ctx)
@@ -237,7 +251,8 @@ class Executor(LanguageVisitor):
         return SetValue(edgeSet)
 
     def visitExprGetReachable(self, ctx: LanguageParser.ExprGetReachableContext):
-        return super().visitExprGetReachable(ctx)
+        packedVal = self.visitChildren(ctx)
+        return SetValue(nfa_reachable(packedVal.value))
 
     def visitExprLoad(self, ctx: LanguageParser.ExprLoadContext):
         if ctx.VAR():
@@ -269,19 +284,32 @@ class Executor(LanguageVisitor):
         val, cont = self.visitChildren(ctx)
         return val in cont.value
 
+    @staticmethod
+    def get_2_nfas(self, fa1Packed: FAValue | str, fa2Packed: FAValue | str):
+        if type(fa1Packed) == FAValue and type(fa2Packed) == FAValue:
+            f1 = fa1Packed.value
+            f2 = fa2Packed.value
+        elif type(fa1Packed) == FAValue and type(fa2Packed) == str:
+            f1 = fa1Packed.value
+            f2 = nfa_from_string(fa2Packed)
+        elif type(fa1Packed) == str and type(fa2Packed) == FAValue:
+            f1 = nfa_from_string(fa1Packed)
+            f2 = fa2Packed.value
+        return f1, f2
+
     def visitExprConcat(self, ctx: LanguageParser.ExprConcatContext):
-        lhs, rhs = ctx.expr()
-        lType = self.typeAnnotations.get(lhs)
-        rType = self.typeAnnotations.get(rhs)
+        fa1Packed, fa2Packed = self.visitChildren(ctx)
 
-        if lType == StringType() and rType == StringType():
-            lVal, rVal = self.visitChildren(ctx)
-            return lVal + rVal
+        if fa1Packed == StringType() and fa2Packed == StringType():
+            return fa1Packed + fa2Packed
 
-        raise RuntimeError("Unsupported yet")
+        f1, f2 = Executor.get_2_nfas(fa1Packed, fa2Packed)
+
+        return FAValue(nfa_concat(f1, f2))
 
     def visitExprKleene(self, ctx: LanguageParser.ExprKleeneContext):
-        return super().visitExprKleene(ctx)
+        fa = self.visitChildren(ctx)
+        return FAValue(nfa_closure(fa))
 
     def visitExprSetStarts(self, ctx: LanguageParser.ExprSetStartsContext):
         faPacked, startsPacked = self.visitChildren(ctx)
@@ -306,4 +334,5 @@ class Executor(LanguageVisitor):
         return SetValue(resultSet)
 
     def visitExprProduct(self, ctx: LanguageParser.ExprProductContext):
-        return super().visitExprProduct(ctx)
+        fa1Packed, fa2Packed = self.visitChildren(ctx)
+        return FAValue(nfa_production(fa1Packed.value, fa2Packed.value))

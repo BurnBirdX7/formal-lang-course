@@ -241,8 +241,16 @@ class Typer(LanguageListener):
         self.typeAnnotations[ctx] = SetType(typ.vertexType)
 
     exitExprGetStarts = exitExprGetFinals
-    exitExprGetReachable = exitExprGetFinals
     exitExprGetVertices = exitExprGetFinals
+
+    def exitExprGetReachable(self, ctx: LanguageParser.ExprGetReachableContext):
+        typ = self.typeAnnotations.get(ctx.expr())
+        if type(typ) != FAType:
+            raise ParseTypeError(
+                f"{ctx.getText()}: Cant get reachable pairs from {typ}"
+            )
+
+        self.typeAnnotations[ctx] = SetType(TupleType([typ.vertexType, typ.vertexType]))
 
     def exitExprGetEdges(self, ctx: LanguageParser.ExprGetEdgesContext):
         fa = self.typeAnnotations[ctx.expr()]
@@ -296,7 +304,17 @@ class Typer(LanguageListener):
             )
 
         expr = ctx.expr()
-        self.typeAnnotations[ctx] = self.typeAnnotations.get(expr)
+        exprType: SetType | TupleType = self.typeAnnotations.get(expr)
+
+        if (type(exprType) != SetType and type(exprType) != TupleType) or (
+            type(exprType) == TupleType and not exprType.is_uniform()
+        ):
+            raise ParseTypeError(
+                f"{ctx.getText()}: Filter can be applied only to sets and uniform tuples,"
+                f" got {exprType}"
+            )
+
+        self.typeAnnotations[ctx] = SetType(exprType.element_type)
 
     # FA Manipulation
 
@@ -341,7 +359,7 @@ class Typer(LanguageListener):
         if t1 == FAType(IntType()) and t2 == StringType():
             return t1
 
-        if type(t1) == FAType and t1 == t2:
+        if t1 == FAType(IntType()) and t2 == FAType(IntType()):
             return t1
 
     def exitExprConcat(self, ctx: LanguageParser.ExprConcatContext):
